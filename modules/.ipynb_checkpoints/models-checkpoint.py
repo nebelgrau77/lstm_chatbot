@@ -6,6 +6,7 @@ class Encoder(nn.Module):
     # We initialize the Encoder object with appropriate layers
 
     def __init__(self, input_size, hidden_size, embedding_size):
+        
         super(Encoder, self).__init__()
 
         self.hidden_size = hidden_size
@@ -15,13 +16,17 @@ class Encoder(nn.Module):
         #self.hidden = torch.zeros(1, 1, hidden_size)
 
         self.embedding = nn.Embedding(self.input_size, self.embedding_size).to(device)
+        
         # The LSTM is our last cell because it produces the hidden state        
         self.lstm = nn.LSTM(self.embedding_size, self.hidden_size, 1).to(device)
     
     def forward(self, x, hidden, cell_state):
         x = self.embedding(x)
-        #x = x.view(1, 1, -1)
-        x = x.view(x.shape[0], 1, -1)
+        
+        x = x.view(1, 1, -1)
+        
+        #x = x.view(x.shape[0], 1, -1)
+        
         x, (hidden, cell_state) = self.lstm(x, (hidden, cell_state))
         return x, hidden, cell_state
 
@@ -37,7 +42,7 @@ class Decoder(nn.Module):
         self.output_size = output_size
         self.embedding_size = embedding_size
 
-        self.embedding = nn.Embedding(self.hidden_size, self.hidden_size)
+        self.embedding = nn.Embedding(self.output_size, self.hidden_size)
 
         self.lstm = nn.LSTM(self.embedding_size, self.hidden_size)
         
@@ -60,7 +65,7 @@ class Decoder(nn.Module):
 class Seq2Seq(nn.Module):
 
     #def __init__(self, encoder: Encoder, decoder: Decoder, device: torch.device):
-    def __init__(self, input_size, hidden_size, embedding_size, output_size):    
+    def __init__(self, input_size, hidden_size, embedding_size, output_size, device):    
         super(Seq2Seq, self).__init__()
 
         self.input_size = input_size
@@ -72,8 +77,10 @@ class Seq2Seq(nn.Module):
         self.decoder = Decoder(self.hidden_size, self.output_size, self.embedding_size).to(device)
         #self.device = device
         
-    def forward(self, src_batch: torch.LongTensor, trg_batch: torch.LongTensor, teacher_forcing_ratio: float = 0.5):
+    def forward(self, src_batch: torch.LongTensor, trg_batch: torch.LongTensor, src_len, trg_len, teacher_forcing_ratio: float = 0.5):
+        
         max_len, batch_size = trg_batch.shape
+                
         trg_vocab_size = self.decoder.output_size
         
         # tensor to store decoder's output
@@ -83,11 +90,16 @@ class Seq2Seq(nn.Module):
         encoder_hidden = torch.zeros([1, 1, self.hidden_size]).to(device) 
         cell_state = torch.zeros([1, 1, self.hidden_size]).to(device)
 
-        # last hidden & cell state of the encoder is used as the decoder's initial hidden state
-        _, hidden, cell = self.encoder(src_batch, encoder_hidden, cell_state)
+        for i in range(src_len):
+        
+            # last hidden & cell state of the encoder is used as the decoder's initial hidden state
+            _, hidden, cell = self.encoder(src_batch[i], encoder_hidden, cell_state)
+        
+        
         
         trg = trg_batch[0]
-        for i in range(1, max_len):
+        
+        for i in range(trg_len):
             prediction, hidden, cell = self.decoder(trg, hidden, cell)
             outputs[i] = prediction
             
