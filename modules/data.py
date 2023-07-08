@@ -44,7 +44,9 @@ def sample_df_perc(df, percentage: float=0.5):
     '''Return only a sampled fraction of the original dataframe'''
     return df.sample(int(df.shape[0]*percentage)).reset_index(drop=True)
 
-
+def sample_df_num(df, number: int):
+    '''Return only a sampled subset of the original dataframe'''
+    return df.sample(number).reset_index(drop=True)
 
 def tokenize_sentence(sentence, normalization = None):
     
