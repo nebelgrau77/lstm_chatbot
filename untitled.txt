@@ -1,0 +1,4 @@
+destination s3://kinetic-data-v2-prod-us-east-1/user_data/u076079/
+origin s3://kinetic-data-v2/user_data/u076079/michal_node_exporter
+
+aws s3 cp s3://kinetic-data-v2/user_data/u076079/michal_node_exporter s3://kinetic-data-v2-prod-us-east-1/user_data/u076079 --acl bucket-owner-full-control
